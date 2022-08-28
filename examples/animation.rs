@@ -32,7 +32,7 @@ fn main() {
 
     let start = Instant::now();
     event_loop.run(move |event, _, control_flow| {
-        *control_flow = ControlFlow::Poll;
+        *control_flow = ControlFlow::Wait;
 
         match event {
             Event::RedrawRequested(window_id) if window_id == graphics_context.window().id() => {
