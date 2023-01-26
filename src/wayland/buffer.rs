@@ -171,6 +171,10 @@ impl WaylandBuffer {
         self.width as usize * self.height as usize
     }
 
+    pub unsafe fn mapped_ref(&self) -> &[u32] {
+        unsafe { slice::from_raw_parts(self.map.as_ptr() as *const u32, self.len()) }
+    }
+
     pub unsafe fn mapped_mut(&mut self) -> &mut [u32] {
         unsafe { slice::from_raw_parts_mut(self.map.as_mut_ptr() as *mut u32, self.len()) }
     }

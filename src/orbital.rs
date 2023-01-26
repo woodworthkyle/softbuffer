@@ -63,15 +63,10 @@ impl OrbitalImpl {
         Ok(())
     }
 
-    pub fn buffer_mut(&mut self) -> Result<&mut [u32], SoftBufferError> {
+    pub fn buffer_mut(&mut self) -> Result<BufferImpl, SoftBufferError> {
         self.buffer
             .resize(self.width as usize * self.height as usize, 0);
-        Ok(&mut self.buffer)
-    }
-
-    pub fn present(&mut self) -> Result<(), SoftBufferError> {
-        self.set_buffer(&self.buffer, self.width, self.height);
-        Ok(())
+        Ok(BufferImpl { imp: self })
     }
 
     fn set_buffer(&self, buffer: &[u32], width_u32: u32, height_u32: u32) {
@@ -125,5 +120,25 @@ impl OrbitalImpl {
 
         // Tell orbital to show the latest window data
         syscall::fsync(window_fd).expect("failed to sync orbital window");
+    }
+}
+
+pub struct BufferImpl<'a> {
+    imp: &'a mut OrbitalImpl,
+}
+
+impl<'a> BufferImpl<'a> {
+    pub fn pixels(&self) -> &[u32] {
+        &self.imp.buffer
+    }
+
+    pub fn pixels_mut(&mut self) -> &mut [u32] {
+        &mut self.imp.buffer
+    }
+
+    pub fn present(self) -> Result<(), SoftBufferError> {
+        self.imp
+            .set_buffer(&self.imp.buffer, self.imp.width, self.imp.height);
+        Ok(())
     }
 }

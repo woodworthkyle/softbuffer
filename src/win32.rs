@@ -104,6 +104,15 @@ impl Buffer {
         }
     }
 
+    fn pixels_ref(&self) -> &[u32] {
+        unsafe {
+            slice::from_raw_parts(
+                self.pixels.as_ptr(),
+                i32::from(self.width) as usize * i32::from(self.height) as usize,
+            )
+        }
+    }
+
     fn pixels_mut(&mut self) -> &mut [u32] {
         unsafe {
             slice::from_raw_parts_mut(
@@ -183,22 +192,32 @@ impl Win32Impl {
         Ok(())
     }
 
-    pub fn buffer_mut(&mut self) -> Result<&mut [u32], SoftBufferError> {
-        Ok(self
-            .buffer
+    pub fn buffer_mut(&mut self) -> Result<BufferImpl, SoftBufferError> {
+        self.buffer
             .as_mut()
-            .expect("Must set size of surface before calling `buffer_mut()`")
-            .pixels_mut())
+            .expect("Must set size of surface before calling `buffer_mut()`");
+        Ok(BufferImpl { imp: self })
+    }
+}
+
+pub struct BufferImpl<'a> {
+    imp: &'a mut Win32Impl,
+}
+
+impl<'a> BufferImpl<'a> {
+    pub fn pixels(&self) -> &[u32] {
+        self.imp.buffer.as_ref().unwrap().pixels_ref()
     }
 
-    pub fn present(&mut self) -> Result<(), SoftBufferError> {
-        let buffer = self
-            .buffer
-            .as_ref()
-            .expect("Must set size of surface before calling `present()`");
+    pub fn pixels_mut(&mut self) -> &mut [u32] {
+        self.imp.buffer.as_mut().unwrap().pixels_mut()
+    }
+
+    pub fn present(self) -> Result<(), SoftBufferError> {
+        let buffer = self.imp.buffer.as_ref().unwrap();
         unsafe {
             Gdi::BitBlt(
-                self.dc,
+                self.imp.dc,
                 0,
                 0,
                 buffer.width.into(),
@@ -210,7 +229,7 @@ impl Win32Impl {
             );
 
             // Validate the window.
-            Gdi::ValidateRect(self.window, ptr::null_mut());
+            Gdi::ValidateRect(self.imp.window, ptr::null_mut());
         }
 
         Ok(())
