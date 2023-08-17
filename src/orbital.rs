@@ -21,7 +21,7 @@ impl OrbitalMap {
                 &syscall::Map {
                     offset: 0,
                     size,
-                    flags: syscall::PROT_READ | syscall::PROT_WRITE,
+                    flags: syscall::PROT_READ | syscall::PROT_WRITE | syscall::MAP_SHARED,
                     address: 0,
                 },
             )?
