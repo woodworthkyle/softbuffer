@@ -45,9 +45,9 @@ x11rb = { version = "0.12.0", features = ["allow-unsafe-code", "shm"], optional 
 version = "0.48.0"
 features = ["Win32_Graphics_Gdi", "Win32_UI_WindowsAndMessaging", "Win32_Foundation"]
 
-[target.'cfg(target_os = "macos")'.dependencies]
+[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
 bytemuck = { version = "1.12.3", features = ["extern_crate_alloc"] }
-cocoa = "0.25.0"
+cocoa = {version = "0.25.0", git = "https://github.com/woodworthkyle/core-foundation-rs.git", branch = "ios_macabi"}
 core-graphics = "0.23.1"
 foreign-types = "0.5.0"
 objc = "0.2.7"

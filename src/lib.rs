@@ -3,12 +3,12 @@
 #![warn(missing_docs)]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "ios"))]
 #[macro_use]
 extern crate objc;
 extern crate core;
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "ios"))]
 mod cg;
 #[cfg(kms_platform)]
 mod kms;
@@ -181,7 +181,7 @@ make_dispatch! {
     Kms(Rc<kms::KmsDisplayImpl>, kms::KmsImpl, kms::BufferImpl<'a>),
     #[cfg(target_os = "windows")]
     Win32((), win32::Win32Impl, win32::BufferImpl<'a>),
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "ios"))]
     CG((), cg::CGImpl, cg::BufferImpl<'a>),
     #[cfg(target_arch = "wasm32")]
     Web(web::WebDisplayImpl, web::WebImpl, web::BufferImpl<'a>),
@@ -226,6 +226,8 @@ impl Context {
             RawDisplayHandle::Windows(_) => ContextDispatch::Win32(()),
             #[cfg(target_os = "macos")]
             RawDisplayHandle::AppKit(_) => ContextDispatch::CG(()),
+            #[cfg(target_os = "ios")]
+            RawDisplayHandle::UiKit(_) => ContextDispatch::CG(()),
             #[cfg(target_arch = "wasm32")]
             RawDisplayHandle::Web(_) => ContextDispatch::Web(web::WebDisplayImpl::new()?),
             #[cfg(target_os = "redox")]
@@ -325,6 +327,10 @@ impl Surface {
             #[cfg(target_os = "macos")]
             (ContextDispatch::CG(()), RawWindowHandle::AppKit(appkit_handle)) => {
                 SurfaceDispatch::CG(unsafe { cg::CGImpl::new(appkit_handle)? })
+            }
+            #[cfg(target_os = "ios")]
+            (ContextDispatch::CG(()), RawWindowHandle::UiKit(uikit_handle)) => {
+                SurfaceDispatch::CG(unsafe { cg::CGImpl::new(uikit_handle)? })
             }
             #[cfg(target_arch = "wasm32")]
             (ContextDispatch::Web(context), RawWindowHandle::Web(web_handle)) => {

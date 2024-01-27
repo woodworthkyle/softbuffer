@@ -5,9 +5,15 @@ use core_graphics::base::{
 use core_graphics::color_space::CGColorSpace;
 use core_graphics::data_provider::CGDataProvider;
 use core_graphics::image::CGImage;
+#[cfg(target_os = "macos")]
 use raw_window_handle::AppKitWindowHandle;
+#[cfg(target_os = "ios")]
+use raw_window_handle::UiKitWindowHandle;
 
+#[cfg(target_os = "macos")]
 use cocoa::appkit::{NSView, NSViewHeightSizable, NSViewWidthSizable, NSWindow};
+#[cfg(target_os = "ios")]
+use cocoa::uikit::{UIView, UIWindow};
 use cocoa::base::{id, nil};
 use cocoa::quartzcore::{transaction, CALayer, ContentsGravity};
 use foreign_types::ForeignType;
@@ -31,7 +37,33 @@ pub struct CGImpl {
 }
 
 impl CGImpl {
-    pub unsafe fn new(handle: AppKitWindowHandle) -> Result<Self, SoftBufferError> {
+    #[cfg(target_os = "ios")] pub unsafe fn new(handle: AppKitWindowHandle) -> Result<Self, SoftBufferError> {
+        let window = handle.ui_window as id;
+        let window: id = msg_send![window, retain];
+        let view = handle.ui_view as id;
+        let layer = CALayer::new();
+        /*
+        unsafe {
+            let subview: id = UIView::alloc(nil).initWithFrame_(UIView::frame(view));
+            layer.set_contents_gravity(ContentsGravity::TopLeft);
+            layer.set_needs_display_on_bounds_change(false);
+            subview.setLayer(layer.id());
+            //subview.setAutoresizingMask_(NSViewWidthSizable | NSViewHeightSizable);
+
+            view.addSubview_(subview); // retains subview (+1) = 2
+            let _: () = msg_send![subview, release]; // releases subview (-1) = 1
+        }
+        */
+        let color_space = CGColorSpace::create_device_rgb();
+        Ok(Self {
+            layer,
+            window,
+            color_space,
+            size: None,
+        })
+    }
+    
+    #[cfg(target_os = "macos")] pub unsafe fn new(handle: AppKitWindowHandle) -> Result<Self, SoftBufferError> {
         let window = handle.ns_window as id;
         let window: id = msg_send![window, retain];
         let view = handle.ns_view as id;
