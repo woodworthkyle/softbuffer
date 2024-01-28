@@ -150,7 +150,7 @@ impl<'a> BufferImpl<'a> {
         transaction::begin();
         transaction::set_disable_actions(true);
 
-        unsafe {
+        #[cfg(target_os = "macos")] unsafe {
             self.imp
                 .layer
                 .set_contents_scale(self.imp.window.backingScaleFactor());
