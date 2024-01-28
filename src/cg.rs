@@ -37,7 +37,7 @@ pub struct CGImpl {
 }
 
 impl CGImpl {
-    #[cfg(target_os = "ios")] pub unsafe fn new(handle: AppKitWindowHandle) -> Result<Self, SoftBufferError> {
+    #[cfg(target_os = "ios")] pub unsafe fn new(handle: UiKitWindowHandle) -> Result<Self, SoftBufferError> {
         let window = handle.ui_window as id;
         let window: id = msg_send![window, retain];
         let view = handle.ui_view as id;
